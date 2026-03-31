@@ -1,5 +1,2 @@
-import GestorGastos from "./GestorGastos.jsx";
-
-export default function App() {
-  return <GestorGastos />;
-}
+/** Reexporta o app para evitar dois componentes aninhados com o nome "App". */
+export { default } from "./GestorGastos.jsx";

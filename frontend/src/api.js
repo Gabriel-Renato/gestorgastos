@@ -1,4 +1,5 @@
-const BASE = "/api/v1";
+/** Em dev o Vite faz proxy de `/api` → backend. Se tiveres 404, define `VITE_API_BASE` (ex.: http://127.0.0.1:8000/api/v1). */
+const BASE = import.meta.env.VITE_API_BASE || "/api/v1";
 
 async function fetchJson(path, options = {}) {
   const headers = {

@@ -22,6 +22,14 @@ const STATUS_INFO = {
 
 const MONTHS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 
+/** Compatibilidade: dados vêm da API (`categories`, `people`, `expenses` no estado).
+ *  Se o teu ficheiro tiver blocos antigos duplicados que ainda referenciem estes nomes,
+ *  remove o código duplicado (deve existir só um `export default function GestorGastos`).
+ */
+const CATEGORIES = [];
+const INIT_EXPENSES = [];
+const INIT_PEOPLE = [];
+
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function mapExpenseFromApi(e) {
   return {
