@@ -1,0 +1,12 @@
+# Frontend (Vite / npm)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Ambiente local
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# Raiz do projeto
+.DS_Store
