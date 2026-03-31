@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Api/CategoryController.php
 
 namespace App\Http\Controllers\Api;
 
@@ -22,6 +21,7 @@ class CategoryController extends Controller
             'color' => 'required|string|max:10',
             'icon'  => 'nullable|string|max:10',
         ]);
+
         return response()->json(Category::create($data), 201);
     }
 
@@ -33,6 +33,7 @@ class CategoryController extends Controller
             'icon'  => 'nullable|string|max:10',
         ]);
         $category->update($data);
+
         return response()->json($category);
     }
 
@@ -42,6 +43,7 @@ class CategoryController extends Controller
             return response()->json(['message' => 'Categoria possui gastos.'], 422);
         }
         $category->delete();
+
         return response()->json(['message' => 'Categoria removida.']);
     }
 }

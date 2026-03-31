@@ -1,19 +1,15 @@
 <?php
-// app/Http/Controllers/Api/ExpenseController.php
 
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
 use App\Models\Expense;
-use App\Models\Person;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class ExpenseController extends Controller
 {
-    // ── GET /api/expenses ─────────────────────────────────────────
     public function index(Request $request): JsonResponse
     {
         Expense::syncOverdueStatuses();
@@ -36,9 +32,9 @@ class ExpenseController extends Controller
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('location', 'like', "%{$search}%")
-                  ->orWhereHas('person', fn ($p) => $p->where('name', 'like', "%{$search}%"))
-                  ->orWhereHas('category', fn ($c) => $c->where('name', 'like', "%{$search}%"));
+                    ->orWhere('location', 'like', "%{$search}%")
+                    ->orWhereHas('person', fn ($p) => $p->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('category', fn ($c) => $c->where('name', 'like', "%{$search}%"));
             });
         }
 
@@ -47,7 +43,6 @@ class ExpenseController extends Controller
         return response()->json($query->paginate($perPage));
     }
 
-    // ── POST /api/expenses ────────────────────────────────────────
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -56,13 +51,13 @@ class ExpenseController extends Controller
             'category_id'         => 'required|exists:categories,id',
             'person_id'           => 'required|exists:people,id',
             'location'            => 'nullable|string|max:255',
-            'payment_method'      => ['required', Rule::in(['credit_card','debit','cash','pix','transfer'])],
+            'payment_method'      => ['required', Rule::in(['credit_card', 'debit', 'cash', 'pix', 'transfer'])],
             'payment_month'       => ['required', 'regex:/^\d{4}-\d{2}$/'],
             'due_date'            => 'nullable|date',
             'installments'        => 'integer|min:1|max:48',
             'current_installment' => 'integer|min:1',
             'notes'               => 'nullable|string',
-            'status'              => ['required', Rule::in(['pending','paid','overdue'])],
+            'status'              => ['required', Rule::in(['pending', 'paid', 'overdue'])],
         ]);
 
         $expense = Expense::create($data);
@@ -70,13 +65,11 @@ class ExpenseController extends Controller
         return response()->json($expense->load(['category', 'person']), 201);
     }
 
-    // ── GET /api/expenses/{id} ────────────────────────────────────
     public function show(Expense $expense): JsonResponse
     {
         return response()->json($expense->load(['category', 'person']));
     }
 
-    // ── PUT /api/expenses/{id} ────────────────────────────────────
     public function update(Request $request, Expense $expense): JsonResponse
     {
         $data = $request->validate([
@@ -85,13 +78,13 @@ class ExpenseController extends Controller
             'category_id'         => 'sometimes|exists:categories,id',
             'person_id'           => 'sometimes|exists:people,id',
             'location'            => 'nullable|string|max:255',
-            'payment_method'      => ['sometimes', Rule::in(['credit_card','debit','cash','pix','transfer'])],
+            'payment_method'      => ['sometimes', Rule::in(['credit_card', 'debit', 'cash', 'pix', 'transfer'])],
             'payment_month'       => ['sometimes', 'regex:/^\d{4}-\d{2}$/'],
             'due_date'            => 'nullable|date',
             'installments'        => 'sometimes|integer|min:1|max:48',
             'current_installment' => 'sometimes|integer|min:1',
             'notes'               => 'nullable|string',
-            'status'              => ['sometimes', Rule::in(['pending','paid','overdue'])],
+            'status'              => ['sometimes', Rule::in(['pending', 'paid', 'overdue'])],
         ]);
 
         $expense->update($data);
@@ -99,21 +92,20 @@ class ExpenseController extends Controller
         return response()->json($expense->load(['category', 'person']));
     }
 
-    // ── PATCH /api/expenses/{id}/pay ──────────────────────────────
     public function markPaid(Expense $expense): JsonResponse
     {
         $expense->update(['status' => 'paid']);
+
         return response()->json($expense->load(['category', 'person']));
     }
 
-    // ── DELETE /api/expenses/{id} ─────────────────────────────────
     public function destroy(Expense $expense): JsonResponse
     {
         $expense->delete();
+
         return response()->json(['message' => 'Gasto removido com sucesso.']);
     }
 
-    // ── GET /api/expenses/dashboard ───────────────────────────────
     public function dashboard(Request $request): JsonResponse
     {
         Expense::syncOverdueStatuses();
@@ -123,14 +115,14 @@ class ExpenseController extends Controller
         $monthExpenses = Expense::with(['category', 'person'])
             ->month($month)->get();
 
-        $total   = $monthExpenses->sum('amount');
-        $paid    = $monthExpenses->where('status', 'paid')->sum('amount');
-        $pending = $monthExpenses->whereIn('status', ['pending','overdue'])->sum('amount');
+        $total = $monthExpenses->sum('amount');
+        $paid = $monthExpenses->where('status', 'paid')->sum('amount');
+        $pending = $monthExpenses->whereIn('status', ['pending', 'overdue'])->sum('amount');
 
-        // Monthly chart (last 6 months)
         $monthlyChart = collect(range(5, 0))->map(function ($offset) {
             $m = now()->subMonths($offset)->format('Y-m');
             $exps = Expense::month($m)->get();
+
             return [
                 'month' => $m,
                 'label' => now()->subMonths($offset)->isoFormat('MMM'),
@@ -139,32 +131,29 @@ class ExpenseController extends Controller
             ];
         });
 
-        // Category breakdown
         $byCategory = $monthExpenses->groupBy('category.name')->map(fn ($g, $name) => [
             'name'  => $name,
             'total' => round($g->sum('amount'), 2),
             'count' => $g->count(),
         ])->values()->sortByDesc('total')->values();
 
-        // Upcoming alerts (next 7 days + overdue)
         $alerts = Expense::with(['category', 'person'])
             ->dueSoon(7)
             ->orderBy('due_date')
             ->get();
 
-        return response()->json(compact('total','paid','pending','monthlyChart','byCategory','alerts'));
+        return response()->json(compact('total', 'paid', 'pending', 'monthlyChart', 'byCategory', 'alerts'));
     }
 
-    // ── GET /api/expenses/alerts ──────────────────────────────────
     public function alerts(): JsonResponse
     {
         Expense::syncOverdueStatuses();
 
         return response()->json([
-            'overdue'  => Expense::with(['category','person'])->where('status','overdue')->orderBy('due_date')->get(),
-            'today'    => Expense::with(['category','person'])->where('status','pending')->whereDate('due_date', today())->get(),
-            'week'     => Expense::with(['category','person'])->where('status','pending')->whereDate('due_date', '>', today())->whereDate('due_date', '<=', now()->addDays(7))->orderBy('due_date')->get(),
-            'month'    => Expense::with(['category','person'])->where('status','pending')->whereDate('due_date', '>', now()->addDays(7))->whereDate('due_date', '<=', now()->addDays(30))->orderBy('due_date')->get(),
+            'overdue' => Expense::with(['category', 'person'])->where('status', 'overdue')->orderBy('due_date')->get(),
+            'today'   => Expense::with(['category', 'person'])->where('status', 'pending')->whereDate('due_date', today())->get(),
+            'week'    => Expense::with(['category', 'person'])->where('status', 'pending')->whereDate('due_date', '>', today())->whereDate('due_date', '<=', now()->addDays(7))->orderBy('due_date')->get(),
+            'month'   => Expense::with(['category', 'person'])->where('status', 'pending')->whereDate('due_date', '>', now()->addDays(7))->whereDate('due_date', '<=', now()->addDays(30))->orderBy('due_date')->get(),
         ]);
     }
 }

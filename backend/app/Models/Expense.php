@@ -1,11 +1,9 @@
 <?php
-// app/Models/Expense.php
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Carbon\Carbon;
 
 class Expense extends Model
 {
@@ -24,7 +22,6 @@ class Expense extends Model
 
     protected $appends = ['days_until_due', 'is_overdue'];
 
-    // ── Relationships ─────────────────────────────────────────────
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -35,11 +32,13 @@ class Expense extends Model
         return $this->belongsTo(Person::class);
     }
 
-    // ── Accessors ─────────────────────────────────────────────────
     public function getDaysUntilDueAttribute(): ?int
     {
-        if (!$this->due_date) return null;
-        return (int) now()->startOfDay()->diffInDays($this->due_date->startOfDay(), false);
+        if (! $this->due_date) {
+            return null;
+        }
+
+        return (int) now()->startOfDay()->diffInDays($this->due_date->copy()->startOfDay(), false);
     }
 
     public function getIsOverdueAttribute(): bool
@@ -47,7 +46,6 @@ class Expense extends Model
         return $this->status !== 'paid' && $this->due_date && $this->due_date->isPast();
     }
 
-    // ── Scopes ────────────────────────────────────────────────────
     public function scopeMonth($query, string $month)
     {
         return $query->where('payment_month', $month);
@@ -61,11 +59,10 @@ class Expense extends Model
     public function scopeDueSoon($query, int $days = 7)
     {
         return $query->where('status', '!=', 'paid')
-                     ->whereNotNull('due_date')
-                     ->whereDate('due_date', '<=', now()->addDays($days));
+            ->whereNotNull('due_date')
+            ->whereDate('due_date', '<=', now()->addDays($days));
     }
 
-    // ── Auto-overdue update ────────────────────────────────────────
     public static function syncOverdueStatuses(): void
     {
         self::where('status', 'pending')

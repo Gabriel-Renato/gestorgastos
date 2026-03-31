@@ -1,5 +1,4 @@
 <?php
-// database/migrations/2026_01_01_000001_create_expenses_table.php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -30,7 +29,7 @@ return new class extends Migration {
             $table->foreignId('person_id')->constrained('people')->restrictOnDelete();
             $table->string('location')->nullable();
             $table->enum('payment_method', ['credit_card', 'debit', 'cash', 'pix', 'transfer'])->default('pix');
-            $table->string('payment_month', 7); // Format: YYYY-MM
+            $table->string('payment_month', 7);
             $table->date('due_date')->nullable();
             $table->unsignedTinyInteger('installments')->default(1);
             $table->unsignedTinyInteger('current_installment')->default(1);

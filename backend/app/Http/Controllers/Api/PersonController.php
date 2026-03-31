@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Api/PersonController.php
 
 namespace App\Http\Controllers\Api;
 
@@ -22,6 +21,7 @@ class PersonController extends Controller
         $data = $request->validate([
             'name' => 'required|string|unique:people,name',
         ]);
+
         return response()->json(Person::create($data), 201);
     }
 
@@ -31,6 +31,7 @@ class PersonController extends Controller
             'name' => 'required|string|unique:people,name,'.$person->id,
         ]);
         $person->update($data);
+
         return response()->json($person);
     }
 
@@ -40,6 +41,7 @@ class PersonController extends Controller
             return response()->json(['message' => 'Pessoa possui gastos.'], 422);
         }
         $person->delete();
+
         return response()->json(['message' => 'Pessoa removida.']);
     }
 }
