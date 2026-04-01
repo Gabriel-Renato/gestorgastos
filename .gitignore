@@ -8,5 +8,8 @@ frontend/.env
 frontend/.env.local
 frontend/.env.*.local
 
+backend/.env
+backend/.env.backup
+
 # Raiz do projeto
 .DS_Store

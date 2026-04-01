@@ -1,5 +1,14 @@
-/** Em dev o Vite faz proxy de `/api` → backend. Se tiveres 404, define `VITE_API_BASE` (ex.: http://127.0.0.1:8000/api/v1). */
-const BASE = import.meta.env.VITE_API_BASE || "/api/v1";
+/**
+ * VITE_API_BASE (env):
+ * - Dev: `/api/v1` → proxy Vite → Laravel (ver .env.development)
+ * - Produção: URL absoluta, ex. https://gestorgastos.rf.gd/api/v1 (ver .env.production)
+ */
+function apiBase() {
+  const raw = (import.meta.env.VITE_API_BASE ?? "/api/v1").trim();
+  return raw.replace(/\/+$/, "") || "/api/v1";
+}
+
+const BASE = apiBase();
 
 async function fetchJson(path, options = {}) {
   const headers = {
