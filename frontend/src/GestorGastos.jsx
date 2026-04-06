@@ -72,6 +72,35 @@ const monthLabel = (ym) => {
   return `${MONTHS[parseInt(m, 10) - 1]} ${y}`;
 };
 
+/** Lista segura para .map — Laravel/API pode devolver array, { data: [] } ou objeto indexado. */
+function asArray(v) {
+  if (v == null) return [];
+  if (Array.isArray(v)) return v;
+  if (typeof v === "object" && Array.isArray(v.data)) return v.data;
+  if (typeof v === "object") return Object.values(v);
+  return [];
+}
+
+function normalizeDashboard(d) {
+  if (!d || typeof d !== "object") return null;
+  return {
+    ...d,
+    monthlyChart: asArray(d.monthlyChart),
+    byCategory: asArray(d.byCategory),
+    alerts: asArray(d.alerts),
+  };
+}
+
+function normalizeAlertGroups(a) {
+  if (!a || typeof a !== "object") return null;
+  return {
+    overdue: asArray(a.overdue),
+    today: asArray(a.today),
+    week: asArray(a.week),
+    month: asArray(a.month),
+  };
+}
+
 // ─── SIDEBAR ──────────────────────────────────────────────────────────────────
 const Sidebar = ({ view, setView, alertCount, footerLabel }) => {
   const nav = [
@@ -310,13 +339,13 @@ const DashboardView = ({
   const paid = dashboard?.paid ?? 0;
   const pending = dashboard?.pending ?? 0;
   const me = expenses.filter((e) => e.paymentMonth === dashMonth);
-  const monthlyData = (dashboard?.monthlyChart ?? []).map((r) => ({
+  const monthlyData = asArray(dashboard?.monthlyChart).map((r) => ({
     name: r.label,
     Total: r.total,
     Pago: r.paid,
   }));
 
-  const catData = (dashboard?.byCategory ?? [])
+  const catData = asArray(dashboard?.byCategory)
     .map((c) => ({
       name: c.name,
       value: c.total,
@@ -325,7 +354,7 @@ const DashboardView = ({
     .filter((c) => c.value > 0)
     .sort((a, b) => b.value - a.value);
 
-  const alertList = (dashboard?.alerts ?? []).map(mapExpenseFromApi);
+  const alertList = asArray(dashboard?.alerts).map(mapExpenseFromApi);
 
   const card = (bg, border) => ({
     padding: "10px 14px",
@@ -588,10 +617,10 @@ const ExpensesView = ({ expenses, categories, people, onEdit, onDelete, onMarkPa
 
 // ─── ALERTS VIEW ──────────────────────────────────────────────────────────────
 const AlertsView = ({ overdue: overdueRaw, dueToday: dueTodayRaw, dueSoon: dueSoonRaw, upcoming: upcomingRaw, onMarkPaid, onEdit, loading }) => {
-  const overdue = (overdueRaw ?? []).map(mapExpenseFromApi);
-  const dueToday = (dueTodayRaw ?? []).map(mapExpenseFromApi);
-  const dueSoon = (dueSoonRaw ?? []).map(mapExpenseFromApi);
-  const upcoming = (upcomingRaw ?? []).map(mapExpenseFromApi);
+  const overdue = asArray(overdueRaw).map(mapExpenseFromApi);
+  const dueToday = asArray(dueTodayRaw).map(mapExpenseFromApi);
+  const dueSoon = asArray(dueSoonRaw).map(mapExpenseFromApi);
+  const upcoming = asArray(upcomingRaw).map(mapExpenseFromApi);
 
   if (loading) {
     return <div style={{ color: "#6b7280", fontSize: 15 }}>Carregando alertas…</div>;
@@ -842,17 +871,17 @@ export default function GestorGastos() {
       api.getPeople(),
       api.getExpenses(),
     ]);
-    setCategories(cats);
-    setPeople(pers);
-    const rows = exps.data ?? exps;
-    setExpenses(Array.isArray(rows) ? rows.map(mapExpenseFromApi) : []);
+    setCategories(asArray(cats));
+    setPeople(asArray(pers));
+    const rows = exps?.data != null ? exps.data : exps;
+    setExpenses(asArray(rows).map(mapExpenseFromApi));
   }, []);
 
   const refreshDashboard = useCallback(async (month) => {
     setDashLoading(true);
     try {
       const d = await api.getDashboard(month);
-      setDashboard(d);
+      setDashboard(normalizeDashboard(d));
     } finally {
       setDashLoading(false);
     }
@@ -862,7 +891,7 @@ export default function GestorGastos() {
     setAlertsLoading(true);
     try {
       const a = await api.getAlerts();
-      setAlertGroups(a);
+      setAlertGroups(normalizeAlertGroups(a));
     } finally {
       setAlertsLoading(false);
     }
@@ -896,7 +925,7 @@ export default function GestorGastos() {
       setDashLoading(true);
       try {
         const d = await api.getDashboard(dashMonth);
-        if (!cancelled) setDashboard(d);
+        if (!cancelled) setDashboard(normalizeDashboard(d));
       } catch {
         if (!cancelled) setDashboard(null);
       } finally {
@@ -913,7 +942,7 @@ export default function GestorGastos() {
       setAlertsLoading(true);
       try {
         const a = await api.getAlerts();
-        if (!cancelled) setAlertGroups(a);
+        if (!cancelled) setAlertGroups(normalizeAlertGroups(a));
       } finally {
         if (!cancelled) setAlertsLoading(false);
       }
