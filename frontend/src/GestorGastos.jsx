@@ -985,11 +985,18 @@ export default function GestorGastos() {
   }
 
   if (bootError) {
+    const apiUrl = api.getApiBaseUrl();
     return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#f8fafc", padding: 24, fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
-        <p style={{ color: "#b91c1c", fontWeight: 600, maxWidth: 420 }}>{bootError}</p>
-        <p style={{ color: "#64748b", fontSize: 14, maxWidth: 480 }}>
-          Confirme se o backend está em execução (ex.: <code>php artisan serve</code> na pasta <code>backend</code>) e se o proxy do Vite aponta para a mesma porta.
+        <p style={{ color: "#b91c1c", fontWeight: 600, maxWidth: 520 }}>{bootError}</p>
+        <p style={{ color: "#64748b", fontSize: 13, maxWidth: 560, lineHeight: 1.5, textAlign: "left" }}>
+          <strong>Base da API neste build:</strong> <code style={{ fontSize: 12 }}>{apiUrl}</code>
+        </p>
+        <p style={{ color: "#64748b", fontSize: 14, maxWidth: 560, lineHeight: 1.55, textAlign: "left" }}>
+          Em <strong>desenvolvimento</strong>, o backend tem de estar a correr (ex.: <code>php artisan serve</code>) e o Vite faz proxy de <code>/api</code> para essa porta.
+        </p>
+        <p style={{ color: "#64748b", fontSize: 14, maxWidth: 560, lineHeight: 1.55, textAlign: "left" }}>
+          Em <strong>produção</strong> (ex.: InfinityFree), um 404 que redireciona para <code>errors.infinityfree.net</code> significa que <strong>não existe rota</strong> para <code>/api/v1</code> no teu site: só enviaste o frontend estático ou o Laravel não está acessível nesse URL. É preciso publicar o Laravel (document root em <code>public</code>) ou alojar a API noutro sítio e definir <code>VITE_API_BASE</code> antes do <code>npm run build</code>.
         </p>
       </div>
     );

@@ -1,0 +1,26 @@
+# Copiado para dist/ no `npm run build` (Vite: pasta public/ → raiz do dist).
+# Apache (InfinityFree, cPanel, etc.): SPA React + ficheiros estáticos.
+
+<IfModule mod_negotiation.c>
+  Options -MultiViews
+</IfModule>
+
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Se o site estiver numa subpasta, descomenta e ajusta (ex.: /gestorgastos/)
+  # RewriteBase /
+
+  # Pedidos reais a ficheiros/pastas (assets/, index.html, .css, .js) não reescrever
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Resto → index.html (futuras rotas React Router, refreshes, etc.)
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# Desativar listagem de diretórios
+Options -Indexes

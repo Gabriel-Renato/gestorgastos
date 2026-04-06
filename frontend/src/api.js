@@ -10,7 +10,13 @@ function apiBase() {
 
 const BASE = apiBase();
 
+/** Para mensagens de erro / diagnóstico (ex.: ecrã de falha ao arrancar). */
+export function getApiBaseUrl() {
+  return BASE;
+}
+
 async function fetchJson(path, options = {}) {
+  const url = `${BASE}${path}`;
   const headers = {
     Accept: "application/json",
     ...options.headers,
@@ -18,14 +24,17 @@ async function fetchJson(path, options = {}) {
   if (options.body && typeof options.body === "string") {
     headers["Content-Type"] = "application/json";
   }
-  const res = await fetch(`${BASE}${path}`, { ...options, headers });
+  const res = await fetch(url, { ...options, headers });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const msg =
       data.message ||
       (data.errors && Object.values(data.errors).flat().join(" ")) ||
       `Erro HTTP ${res.status}`;
-    throw new Error(msg);
+    const err = new Error(msg);
+    err.status = res.status;
+    err.requestUrl = url;
+    throw err;
   }
   return data;
 }
